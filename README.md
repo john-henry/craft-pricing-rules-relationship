@@ -1,3 +1,5 @@
+<img width="60" height="60" alt="pricing-rules-plugin-icon" src="https://github.com/user-attachments/assets/717d2c86-109f-47e9-be15-038cccd2cc97" />
+
 # Craft Pricing Rules Relationship
 
 Craft Pricing Rules Relationship is a field that creates relationships between Craft Commerce Pricing Rules and elements. It fills the gap between Craft Commerce's built-in pricing rule management and Craft's built-in element relationships, allowing store managers to easily link pricing rules to any element type.
