@@ -1,0 +1,63 @@
+{
+  "name": "johnhenry/craft-pricing-rules-relationship",
+  "description": "A field to add relationships between Commerce Pricing Rules and an element",
+  "type": "craft-plugin",
+  "homepage": "https://plugins.johnhenry.ie/pricing-rules-relationship",
+  "version": "1.0.0",
+  "keywords": [
+    "craft",
+    "cms",
+    "craftcms",
+    "craft-commerce",
+    "craft-plugin",
+    "sales relationship",
+    "catalog pricing rules",
+    "promotional sales"
+  ],
+  "support": {
+    "issues": "https://github.com/john-henry/craft-pricing-rules-relationship/issues?state=open",
+    "docs": "https://plugins.johnhenry.ie/pricing-rules-relationship"
+  },
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "John Henry",
+      "homepage": "https://johnhenry.ie"
+    }
+  ],
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.0.0",
+    "craftcms/commerce": "^5.0.0"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "require-dev": {
+    "craftcms/phpstan": "dev-main",
+    "craftcms/ecs": "dev-main"
+  },
+  "scripts": {
+    "phpstan": "phpstan --ansi --memory-limit=1G",
+    "check-cs": "ecs check --ansi",
+    "fix-cs": "ecs check --fix --ansi"
+  },
+  "config": {
+    "allow-plugins": {
+      "craftcms/plugin-installer": true,
+      "yiisoft/yii2-composer": true
+    },
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "autoload": {
+    "psr-4": {
+      "johnhenry\\pricingrulesrelationship\\": "src/"
+    }
+  },
+  "extra": {
+    "name": "Pricing Rules Relationship",
+    "handle": "pricing-rules-relationship",
+    "changelogUrl": "https://raw.githubusercontent.com/john-henry/craft-pricing-rules-relationship/craft-4/CHANGELOG.md",
+    "class": "johnhenry\\pricingrulesrelationship\\PricingRulesRelationship"
+  }
+}

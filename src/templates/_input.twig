@@ -1,0 +1,41 @@
+{% import '_includes/forms' as forms %}
+
+{%- set errors = options.error ?? [] %}
+{%- set options = options.sales ?? [] %}
+
+
+{% if errors %}
+   <p class="zilch small">
+	  {{ errors }}
+   </p>
+{% elseif options is empty %}
+   <p class="zilch small">
+	  {{ 'No active sales available'|t('pricing-rules-relationship') }}
+   </p>
+{% else %}
+   <div class="checkbox-group">
+	  {% for sale in options %}
+		 <div>
+			<input
+					id="{{ field.handle }}-{{ sale.id }}"
+					type="checkbox"
+					class="checkbox"
+					name="{{ field.handle }}[]"
+					value="{{ sale.id }}"
+					{% if sale.id in value %}checked{% endif %}
+			>
+			<label class="flex flex-nowrap items-center gap-xs" for="{{ field.handle }}-{{ sale.id }}"><span>{{ sale.name }}</span>
+			   {% if field.showRuleExpiryDates and sale.dateTo %}
+				  <span class="light">
+                        <span class="smalltext">({{ 'expires'|t('pricing-rules-relationship') }} {{ sale.dateTo|datetime('short') }})</span>
+                    </span>
+			   {% endif %}</label>
+		 </div>
+	  {% endfor %}
+   </div>
+{% endif %}
+{% if field.showNewRuleButton and currentUser.can('commerce-manageCatalogPricingRules') %}
+   <div class="mt-m">
+	  <a href="{{ cpUrl('commerce/store-management/primary/pricing-rules/new') }}" class="btn add icon dashed wrap" target="_blank">{{ 'New Catalog Pricing Rule'|t('pricing-rules-relationship') }}</a>
+   </div>
+{% endif %}

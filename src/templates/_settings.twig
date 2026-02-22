@@ -1,0 +1,15 @@
+{% import '_includes/forms' as forms %}
+{{ forms.lightswitchField({
+   label: 'Show "New Catalog Pricing Rule" Button'|t('pricing-rules-relationship'),
+   instructions: 'Whether to display a button to create new pricing rules'|t('pricing-rules-relationship'),
+   id: 'showNewRuleButton',
+   name: 'showNewRuleButton',
+   on: field.showNewRuleButton,
+}) }}
+{{ forms.lightswitchField({
+   label: 'Show Rule Expiry Dates'|t('pricing-rules-relationship'),
+   instructions: 'Whether to display expiry dates beside pricing rules'|t('pricing-rules-relationship'),
+   id: 'showRuleExpiryDates',
+   name: 'showRuleExpiryDates',
+   on: field.showRuleExpiryDates,
+}) }}
