@@ -3,7 +3,7 @@
   "description": "A field to add relationships between Commerce Pricing Rules and an element",
   "type": "craft-plugin",
   "homepage": "https://plugins.johnhenry.ie/pricing-rules-relationship",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "keywords": [
     "craft",
     "cms",
