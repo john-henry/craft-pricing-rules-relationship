@@ -2,8 +2,7 @@
   "name": "johnhenry/craft-pricing-rules-relationship",
   "description": "A field to add relationships between Commerce Pricing Rules and an element",
   "type": "craft-plugin",
-  "homepage": "https://plugins.johnhenry.ie/pricing-rules-relationship",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "keywords": [
     "craft",
     "cms",
@@ -14,27 +13,29 @@
     "catalog pricing rules",
     "promotional sales"
   ],
-  "support": {
-    "issues": "https://github.com/john-henry/craft-pricing-rules-relationship/issues?state=open",
-    "docs": "https://plugins.johnhenry.ie/pricing-rules-relationship"
-  },
-  "license": "proprietary",
+  "license": "MIT",
   "authors": [
     {
       "name": "John Henry",
       "homepage": "https://johnhenry.ie"
     }
   ],
+  "homepage": "https://plugins.johnhenry.ie/pricing-rules-relationship",
   "require": {
-    "php": ">=8.2",
-    "craftcms/cms": "^5.0.0",
-    "craftcms/commerce": "^5.0.0"
+    "php": "^8.2 || ^8.3 || ^8.4",
+    "craftcms/cms": "^5.0",
+    "craftcms/commerce": "^5.0"
   },
-  "minimum-stability": "stable",
-  "prefer-stable": true,
   "require-dev": {
     "craftcms/phpstan": "dev-main",
     "craftcms/ecs": "dev-main"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "johnhenry\\pricingrulesrelationship\\": "src/"
+    }
   },
   "scripts": {
     "phpstan": "phpstan --ansi --memory-limit=1G",
@@ -44,20 +45,24 @@
   "config": {
     "allow-plugins": {
       "craftcms/plugin-installer": true,
+      "pestphp/pest-plugin": true,
       "yiisoft/yii2-composer": true
     },
     "optimize-autoloader": true,
     "sort-packages": true
   },
-  "autoload": {
-    "psr-4": {
-      "johnhenry\\pricingrulesrelationship\\": "src/"
-    }
+  "support": {
+    "docs": "https://plugins.johnhenry.ie/pricing-rules-relationship",
+    "source": "https://github.com/john-henry/craft-pricing-rules-relationship",
+    "issues": "https://github.com/john-henry/craft-pricing-rules-relationship/issues"
   },
   "extra": {
     "name": "Pricing Rules Relationship",
     "handle": "pricing-rules-relationship",
-    "changelogUrl": "https://raw.githubusercontent.com/john-henry/craft-pricing-rules-relationship/craft-4/CHANGELOG.md",
+    "developer": "John Henry",
+    "developerUrl": "https://johnhenry.ie",
+    "documentationUrl": "https://plugins.johnhenry.ie/pricing-rules-relationship/",
+    "changelogUrl": "https://github.com/john-henry/craft-pricing-rules-relationship/blob/craft-5/CHANGELOG.md",
     "class": "johnhenry\\pricingrulesrelationship\\PricingRulesRelationship"
   }
 }

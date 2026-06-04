@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * @copyright Copyright (c) John Henry Donovan
  */
@@ -17,14 +15,29 @@ use DateTime;
 use Exception;
 use yii\base\InvalidConfigException;
 
+/**
+ * Resolves which products match a set of Commerce catalog pricing rules.
+ *
+ * @author John Henry Donovan <info@johnhenry.ie>
+ * @since 1.0.0
+ */
 class PricingRulesRelationshipService extends Component
 {
+    // =========================================================================
+    // Public Methods
+    // =========================================================================
+
     /**
+     * Returns the primary-owner IDs of products whose variants match any of the
+     * given catalog pricing rules.
+     *
+     * @param array $selectedSaleIds Catalog pricing rule IDs to match against.
+     * @param bool $hasStock Whether to restrict results to in-stock variants.
+     * @return array<int> Deduplicated product IDs.
      * @throws InvalidConfigException
      */
-    public function getMatchingProductsIds($selectedSaleIds, $hasStock = false): array
+    public function getMatchingProductsIds(array $selectedSaleIds, bool $hasStock = false): array
     {
-        // Get the catalog pricing rules (exclude expired ones)
         $now = new DateTime();
         $catalogPricingRules = (new Query())
             ->select(['id', 'variantCondition', 'purchasableCondition'])
@@ -41,8 +54,7 @@ class PricingRulesRelationshipService extends Component
             return [];
         }
 
-        // Get all variants
-        $variantQuery = Variant::find();
+        $variantQuery = Variant::find()->site('*');
 
         if ($hasStock) {
             $variantQuery->hasStock();
@@ -53,27 +65,35 @@ class PricingRulesRelationshipService extends Component
         $matchingProductIds = [];
 
         foreach ($allVariants as $variant) {
-            // Check if variant matches any of the selected catalog pricing rules
             foreach ($catalogPricingRules as $rule) {
-                if ($this->variantMatchesRule($variant, $rule)) {
+                if ($this->_variantMatchesRule($variant, $rule)) {
                     $matchingProductIds[] = $variant->getPrimaryOwnerId();
-                    break; // Move to next variant once matched
+                    break;
                 }
             }
         }
-        // Remove duplicates and return
+
         return array_unique($matchingProductIds);
     }
 
-    private function variantMatchesRule(ElementInterface $variant, array $rule): bool
+    // =========================================================================
+    // Private Methods
+    // =========================================================================
+
+    /**
+     * Returns whether a variant satisfies the conditions of a pricing rule row.
+     *
+     * @param ElementInterface $variant The variant to test.
+     * @param array $rule Raw rule row from the DB (keys: variantCondition, purchasableCondition).
+     * @return bool
+     */
+    private function _variantMatchesRule(ElementInterface $variant, array $rule): bool
     {
-        // If no conditions specified, all variants with promotional pricing match
         if (empty($rule['variantCondition']) && empty($rule['purchasableCondition'])) {
             return true;
         }
 
         try {
-            // Check variant condition
             if (!empty($rule['variantCondition'])) {
                 $conditionConfig = json_decode($rule['variantCondition'], true, 512, JSON_THROW_ON_ERROR);
                 $condition = Craft::$app->getConditions()->createCondition($conditionConfig);
@@ -82,7 +102,6 @@ class PricingRulesRelationshipService extends Component
                 }
             }
 
-            // Check purchasable condition
             if (!empty($rule['purchasableCondition'])) {
                 $conditionConfig = json_decode($rule['purchasableCondition'], true, 512, JSON_THROW_ON_ERROR);
                 $condition = Craft::$app->getConditions()->createCondition($conditionConfig);

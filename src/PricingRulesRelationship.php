@@ -1,43 +1,44 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * @copyright Copyright (c) John Henry Donovan
  */
 
 namespace johnhenry\pricingrulesrelationship;
 
-use Craft;
 use craft\base\Plugin as BasePlugin;
-
 use craft\events\RegisterComponentTypesEvent;
 use craft\services\Fields;
 use craft\web\twig\variables\CraftVariable;
-
 use johnhenry\pricingrulesrelationship\fields\PricingRulesRelationshipField;
 use johnhenry\pricingrulesrelationship\services\PricingRulesRelationshipService;
 use johnhenry\pricingrulesrelationship\variables\PricingRulesRelationshipVariable;
-
 use yii\base\Event;
 
 /**
- * Pricing Rules Relationship plugin
+ * Pricing Rules Relationship plugin — relates Commerce catalog pricing rules to elements.
  *
  * @method static PricingRulesRelationship getInstance()
  * @property PricingRulesRelationshipService $pricingRulesRelationshipService
  * @author John Henry Donovan <info@johnhenry.ie>
- * @copyright John Henry Donovan
- * @license https://craftcms.github.io/license/ Craft License
+ * @since 1.0.0
  */
 class PricingRulesRelationship extends BasePlugin
 {
-    /**
-     * @var PricingRulesRelationship
-     */
+    // =========================================================================
+    // Properties
+    // =========================================================================
+
+    /** @var PricingRulesRelationship */
     public static PricingRulesRelationship $plugin;
 
+    // =========================================================================
+    // Static Methods
+    // =========================================================================
 
+    /**
+     * @inheritdoc
+     */
     public static function config(): array
     {
         return [
@@ -47,17 +48,30 @@ class PricingRulesRelationship extends BasePlugin
         ];
     }
 
+    // =========================================================================
+    // Public Methods
+    // =========================================================================
+
+    /**
+     * @inheritdoc
+     */
     public function init(): void
     {
         parent::init();
 
-        $this->_registerVariable();
+        self::$plugin = $this;
 
-        if (Craft::$app->getRequest()->getIsCpRequest()) {
-            $this->_registerField();
-        }
+        $this->_registerField();
+        $this->_registerVariable();
     }
 
+    // =========================================================================
+    // Private Methods
+    // =========================================================================
+
+    /**
+     * Registers the field type.
+     */
     private function _registerField(): void
     {
         Event::on(
@@ -65,9 +79,13 @@ class PricingRulesRelationship extends BasePlugin
             Fields::EVENT_REGISTER_FIELD_TYPES,
             function(RegisterComponentTypesEvent $event) {
                 $event->types[] = PricingRulesRelationshipField::class;
-            });
+            }
+        );
     }
 
+    /**
+     * Registers the Twig variable.
+     */
     private function _registerVariable(): void
     {
         Event::on(
@@ -75,6 +93,7 @@ class PricingRulesRelationship extends BasePlugin
             CraftVariable::EVENT_INIT,
             static function(Event $event) {
                 $event->sender->set('pricingRulesRelationship', PricingRulesRelationshipVariable::class);
-            });
+            }
+        );
     }
 }

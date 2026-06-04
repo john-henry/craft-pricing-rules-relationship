@@ -2,11 +2,12 @@
 
 {%- set errors = options.error ?? [] %}
 {%- set options = options.sales ?? [] %}
+{%- set value = value ?? [] %}
 
 
 {% if errors %}
    <p class="zilch small">
-	  {{ errors }}
+	  {{ errors|e }}
    </p>
 {% elseif options is empty %}
    <p class="zilch small">
@@ -36,6 +37,6 @@
 {% endif %}
 {% if field.showNewRuleButton and currentUser.can('commerce-manageCatalogPricingRules') %}
    <div class="mt-m">
-	  <a href="{{ cpUrl('commerce/store-management/primary/pricing-rules/new') }}" class="btn add icon dashed wrap" target="_blank">{{ 'New Catalog Pricing Rule'|t('pricing-rules-relationship') }}</a>
+	  <a href="{{ cpUrl('commerce/store-management/' ~ storeHandle ~ '/pricing-rules/new') }}" class="btn add icon dashed wrap" target="_blank">{{ 'New Catalog Pricing Rule'|t('pricing-rules-relationship') }}</a>
    </div>
 {% endif %}
