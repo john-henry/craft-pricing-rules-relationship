@@ -31,7 +31,9 @@ This package is licensed for free under the MIT License.
 
 ## Requirements
 
-This plugin requires [Craft Commerce](https://craftcms.com/) 5.0.0 or later, or 4.0.0 or later, or 5.0.0 or later.
+- Craft CMS 5.0 or later
+- Craft Commerce 5.0 or later
+- PHP 8.2 or later.
 
 ---
 
