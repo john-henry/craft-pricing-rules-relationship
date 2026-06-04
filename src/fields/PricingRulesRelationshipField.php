@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * @copyright Copyright (c) John Henry Donovan
  */
@@ -20,20 +18,46 @@ use Twig\Error\SyntaxError;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 
+/**
+ * Relates Commerce catalog pricing rules to any element via a checkbox list.
+ *
+ * @author John Henry Donovan <info@johnhenry.ie>
+ * @since 1.0.0
+ */
 class PricingRulesRelationshipField extends Field
 {
+    // =========================================================================
+    // Properties
+    // =========================================================================
+
+    /** @var string Placeholder text shown when no pricing rules are available. */
+    public string $defaultText = '';
+
+    /** @var bool Whether to show the "New Catalog Pricing Rule" button in the field UI. */
+    public bool $showNewRuleButton = true;
+
+    /** @var bool Whether to show pricing rule expiry dates beside each option. */
+    public bool $showRuleExpiryDates = true;
+
+    // =========================================================================
+    // Static Methods
+    // =========================================================================
+
+    /**
+     * @inheritdoc
+     */
     public static function displayName(): string
     {
         return 'Pricing Rules Relationship';
     }
 
+    // =========================================================================
+    // Public Methods
+    // =========================================================================
 
-    public string $defaultText = '';
-
-    public bool $showNewRuleButton = true;
-
-    public bool $showRuleExpiryDates = true;
-
+    /**
+     * @inheritdoc
+     */
     public function getSettingsHtml(): ?string
     {
         return Craft::$app->getView()->renderTemplate('pricing-rules-relationship/_settings', [
@@ -41,8 +65,8 @@ class PricingRulesRelationshipField extends Field
         ]);
     }
 
-
     /**
+     * @inheritdoc
      * @throws SiteNotFoundException
      * @throws SyntaxError
      * @throws InvalidConfigException
@@ -52,23 +76,31 @@ class PricingRulesRelationshipField extends Field
      */
     public function getInputHtml(mixed $value, ?ElementInterface $element): string
     {
+        $options = $this->_getSales($element);
+
         return Craft::$app->getView()->renderTemplate('pricing-rules-relationship/_input', [
             'name' => $this->handle,
             'field' => $this,
             'value' => $value,
-            'options' => $this->getSales($element),
+            'options' => $options,
+            'storeHandle' => $options['storeHandle'],
         ]);
     }
 
+    // =========================================================================
+    // Private Methods
+    // =========================================================================
 
     /**
+     * Returns active pricing rules for the element's store, plus the store handle.
+     *
+     * @return array{error: string|null, sales: array, storeHandle: string}
      * @throws SiteNotFoundException
      * @throws InvalidConfigException
      */
-    private function getSales(ElementInterface $element = null): array
+    private function _getSales(?ElementInterface $element = null): array
     {
         $currentSite = Craft::$app->getSites()->getCurrentSite();
-
         $siteId = $element?->siteId ?? $currentSite->id;
         $store = Commerce::getInstance()->getStores()->getStoreBySiteId($siteId);
 
@@ -76,6 +108,7 @@ class PricingRulesRelationshipField extends Field
             return [
                 'error' => Craft::t('pricing-rules-relationship', 'No store available for this site'),
                 'sales' => [],
+                'storeHandle' => 'primary',
             ];
         }
 
@@ -99,6 +132,7 @@ class PricingRulesRelationshipField extends Field
         return [
             'error' => null,
             'sales' => $activeSales,
+            'storeHandle' => $store->handle,
         ];
     }
 }
