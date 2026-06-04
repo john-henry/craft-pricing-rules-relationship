@@ -83,7 +83,7 @@ class PricingRulesRelationshipField extends Field
             'field' => $this,
             'value' => $value,
             'options' => $options,
-            'storeHandle' => $options['storeHandle'] ?? 'primary',
+            'storeHandle' => $options['storeHandle'],
         ]);
     }
 
