@@ -1,5 +1,5 @@
 [![Stable Version](https://img.shields.io/packagist/v/johnhenry/craft-pricing-rules-relationship?label=stable&style=for-the-badge)]((https://packagist.org/packages/johnhenry/craft-pricing-rules-relationship))
-[![Static Badge](https://img.shields.io/badge/free-plugin?style=for-the-badge&logo=craftcms&logoColor=white&logoSize=auto&label=Craft%20Plugin%20Store&labelColor=%23E5422B)](https://plugins.craftcms.com/craft-pricing-rules-relationship?craft5)
+[![Static Badge](https://img.shields.io/badge/free-plugin?style=for-the-badge&logo=craftcms&logoColor=white&logoSize=auto&label=Craft%20Plugin%20Store&labelColor=%23E5422B)](https://plugins.craftcms.com/pricing-rules-relationship?craft5)
 
 <p align="center"><img width="120" height="120" alt="pricing-rules-plugin-icon" src="https://plugins.johnhenry.ie/icons/craft-pricing-rules-relationship.svg"></p>
 
