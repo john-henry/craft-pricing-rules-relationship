@@ -7,6 +7,7 @@
 namespace johnhenry\pricingrulesrelationship\variables;
 
 use johnhenry\pricingrulesrelationship\PricingRulesRelationship;
+use johnhenry\pricingrulesrelationship\services\PricingRulesRelationshipService;
 use yii\base\InvalidConfigException;
 
 /**
@@ -31,6 +32,27 @@ class PricingRulesRelationshipVariable
      */
     public function getSaleIds(array $selectedSaleIds, bool $hasStock = false): array
     {
-        return PricingRulesRelationship::getInstance()->pricingRulesRelationshipService->getMatchingProductsIds($selectedSaleIds, $hasStock);
+        return $this->_getService()->getMatchingProductsIds($selectedSaleIds, $hasStock);
+    }
+
+    // =========================================================================
+    // Private Methods
+    // =========================================================================
+
+    /**
+     * Returns the pricing rules relationship service.
+     *
+     * Resolves the service through a typed getter rather than magic property
+     * access so PHPStan can narrow the return type (it cannot resolve `__get()`).
+     *
+     * @return PricingRulesRelationshipService
+     * @throws InvalidConfigException
+     */
+    private function _getService(): PricingRulesRelationshipService
+    {
+        $service = PricingRulesRelationship::getInstance()->get('pricingRulesRelationshipService');
+        assert($service instanceof PricingRulesRelationshipService);
+
+        return $service;
     }
 }

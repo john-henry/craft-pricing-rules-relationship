@@ -16,7 +16,7 @@ use johnhenry\pricingrulesrelationship\variables\PricingRulesRelationshipVariabl
 use yii\base\Event;
 
 /**
- * Pricing Rules Relationship plugin — relates Commerce catalog pricing rules to elements.
+ * Pricing Rules Relationship plugin: relates Commerce catalog pricing rules to elements.
  *
  * @method static PricingRulesRelationship getInstance()
  * @property PricingRulesRelationshipService $pricingRulesRelationshipService
