@@ -11,7 +11,7 @@ use craft\base\ElementInterface;
 use craft\base\Field;
 use craft\commerce\Plugin as Commerce;
 use craft\errors\SiteNotFoundException;
-use DateTime;
+use craft\helpers\Json;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
@@ -67,6 +67,34 @@ class PricingRulesRelationshipField extends Field
 
     /**
      * @inheritdoc
+     *
+     * The value is stored as a JSON array of ID strings, so we decode it back
+     * into a clean list of unique integer IDs. That way templates always get an
+     * int[] to work with rather than the raw JSON string.
+     */
+    public function normalizeValue(mixed $value, ?ElementInterface $element = null): mixed
+    {
+        if (is_string($value)) {
+            $value = Json::decodeIfJson($value);
+        }
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $ids = [];
+
+        foreach ($value as $id) {
+            if (is_int($id) || (is_string($id) && $id !== '' && ctype_digit($id))) {
+                $ids[] = (int)$id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * @inheritdoc
      * @throws SiteNotFoundException
      * @throws SyntaxError
      * @throws InvalidConfigException
@@ -78,12 +106,19 @@ class PricingRulesRelationshipField extends Field
     {
         $options = $this->_getSales($element);
 
+        // Work out how many saved rules are no longer in the list, so we can
+        // warn the editor they'll drop off on the next save.
+        $selectedIds = is_array($value) ? array_map('intval', $value) : [];
+        $availableIds = array_map(static fn(array $sale): int => (int)$sale['id'], $options['sales']);
+        $missingCount = count(array_diff($selectedIds, $availableIds));
+
         return Craft::$app->getView()->renderTemplate('pricing-rules-relationship/_input', [
             'name' => $this->handle,
             'field' => $this,
             'value' => $value,
             'options' => $options,
             'storeHandle' => $options['storeHandle'],
+            'missingCount' => $missingCount,
         ]);
     }
 
@@ -94,7 +129,11 @@ class PricingRulesRelationshipField extends Field
     /**
      * Returns active pricing rules for the element's store, plus the store handle.
      *
-     * @return array{error: string|null, sales: array, storeHandle: string}
+     * If there's no store for the site, the handle comes back as null so the
+     * template can hide the "New Catalog Pricing Rule" button rather than point
+     * it at a guessed handle.
+     *
+     * @return array{error: string|null, sales: array, storeHandle: string|null}
      * @throws SiteNotFoundException
      * @throws InvalidConfigException
      */
@@ -108,20 +147,19 @@ class PricingRulesRelationshipField extends Field
             return [
                 'error' => Craft::t('pricing-rules-relationship', 'No store available for this site'),
                 'sales' => [],
-                'storeHandle' => 'primary',
+                'storeHandle' => null,
             ];
         }
 
-        $sales = Commerce::getInstance()->getCatalogPricingRules()->getAllCatalogPricingRules($store->id);
+        // Only offer rules that are currently active: enabled and inside their
+        // date window. This is Commerce's own definition of an active rule, and
+        // it's the same set the service matches against, so a rule you can tick
+        // here is a rule that can actually return products.
+        $sales = Commerce::getInstance()->getCatalogPricingRules()->getAllActiveCatalogPricingRules($store->id);
 
         $activeSales = [];
-        $now = new DateTime();
 
         foreach ($sales as $sale) {
-            if ($sale->dateTo !== null && $sale->dateTo <= $now) {
-                continue;
-            }
-
             $activeSales[] = [
                 'id' => $sale->id,
                 'name' => $sale->name,

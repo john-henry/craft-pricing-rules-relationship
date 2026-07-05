@@ -1,4 +1,11 @@
 {% import '_includes/forms' as forms %}
+{{ forms.textField({
+   label: 'Empty State Text'|t('pricing-rules-relationship'),
+   instructions: 'Text shown when no active pricing rules are available for the store. Leave blank to use the default message.'|t('pricing-rules-relationship'),
+   id: 'defaultText',
+   name: 'defaultText',
+   value: field.defaultText,
+}) }}
 {{ forms.lightswitchField({
    label: 'Show "New Catalog Pricing Rule" Button'|t('pricing-rules-relationship'),
    instructions: 'Whether to display a button to create new pricing rules'|t('pricing-rules-relationship'),

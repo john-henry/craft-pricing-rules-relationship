@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests run without a Craft application instance — any test calling
+ * Unit tests run without a Craft application instance; any test calling
  * Craft::$app will fail in the Unit directory. For integration tests that
  * need a real Craft + Commerce context, install markhuot/craft-pest-core
  * in the parent Craft project and run:
@@ -30,6 +30,11 @@ uses(
 /**
  * Insert a minimal catalog pricing rule directly into the DB and return its ID.
  * storeId is resolved from the first store in the database.
+ *
+ * Timestamps use gmdate() because Commerce stores dateFrom/dateTo/dateCreated
+ * in UTC, and the service compares them against a UTC "now". Writing local-time
+ * strings into these columns would misfire the expiry filter under a non-UTC
+ * server timezone.
  */
 function insertPricingRule(array $override = []): int
 {
@@ -49,8 +54,8 @@ function insertPricingRule(array $override = []): int
         'customerCondition' => null,
         'dateFrom' => null,
         'dateTo' => null,
-        'dateCreated' => date('Y-m-d H:i:s'),
-        'dateUpdated' => date('Y-m-d H:i:s'),
+        'dateCreated' => gmdate('Y-m-d H:i:s'),
+        'dateUpdated' => gmdate('Y-m-d H:i:s'),
         'uid' => StringHelper::UUID(),
     ], $override))->execute();
 

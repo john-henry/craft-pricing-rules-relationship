@@ -1,42 +1,59 @@
-{% import '_includes/forms' as forms %}
+{# =========================================================================
+   Pricing Rules Relationship: Field Input
+   Renders the store's active catalog pricing rules as a labelled checkbox
+   group, with informational states for a missing store, an empty rule list,
+   and stale (deleted) rule references.
+   ========================================================================= #}
 
-{%- set errors = options.error ?? [] %}
-{%- set options = options.sales ?? [] %}
+{%- set storeError = options.error ?? null %}
+{%- set rules = options.sales ?? [] %}
 {%- set value = value ?? [] %}
+{%- set missingCount = missingCount ?? 0 %}
+{%- set emptyText = field.defaultText|default('')|trim ?: 'No active pricing rules available'|t('pricing-rules-relationship') %}
+{%- set noticeId = field.handle ~ '-notice' %}
 
-
-{% if errors %}
-   <p class="zilch small">
-	  {{ errors|e }}
+{% if storeError %}
+   <p id="{{ noticeId }}" class="light">
+      {{ storeError|e }}
    </p>
-{% elseif options is empty %}
-   <p class="zilch small">
-	  {{ 'No active sales available'|t('pricing-rules-relationship') }}
+{% elseif rules is empty %}
+   <p id="{{ noticeId }}" class="light">
+      {{ emptyText }}
    </p>
 {% else %}
-   <div class="checkbox-group">
-	  {% for sale in options %}
-		 <div>
-			<input
-					id="{{ field.handle }}-{{ sale.id }}"
-					type="checkbox"
-					class="checkbox"
-					name="{{ field.handle }}[]"
-					value="{{ sale.id }}"
-					{% if sale.id in value %}checked{% endif %}
-			>
-			<label class="flex flex-nowrap items-center gap-xs" for="{{ field.handle }}-{{ sale.id }}"><span>{{ sale.name }}</span>
-			   {% if field.showRuleExpiryDates and sale.dateTo %}
-				  <span class="light">
-                        <span class="smalltext">({{ 'expires'|t('pricing-rules-relationship') }} {{ sale.dateTo|datetime('short') }})</span>
-                    </span>
-			   {% endif %}</label>
-		 </div>
-	  {% endfor %}
+   <div
+      class="checkbox-group"
+      role="group"
+      aria-label="{{ 'Available pricing rules'|t('pricing-rules-relationship') }}"
+      {% if missingCount %}aria-describedby="{{ noticeId }}"{% endif %}
+   >
+      {% for rule in rules %}
+         <div>
+            <input
+               id="{{ field.handle }}-{{ rule.id }}"
+               type="checkbox"
+               class="checkbox"
+               name="{{ field.handle }}[]"
+               value="{{ rule.id }}"
+               {% if rule.id in value %}checked{% endif %}
+            >
+            <label class="flex flex-nowrap items-center gap-xs" for="{{ field.handle }}-{{ rule.id }}"><span>{{ rule.name }}</span>
+               {% if field.showRuleExpiryDates and rule.dateTo %}
+                  <span class="light">
+                     <span class="smalltext">({{ 'expires'|t('pricing-rules-relationship') }} {{ rule.dateTo|datetime('short') }})</span>
+                  </span>
+               {% endif %}</label>
+         </div>
+      {% endfor %}
    </div>
+   {% if missingCount %}
+      <p id="{{ noticeId }}" class="warning has-icon">
+         {{ '{count, plural, one{# previously selected rule is no longer available.} other{# previously selected rules are no longer available.}}'|t('pricing-rules-relationship', { count: missingCount }) }}
+      </p>
+   {% endif %}
 {% endif %}
-{% if field.showNewRuleButton and currentUser.can('commerce-manageCatalogPricingRules') %}
+{% if field.showNewRuleButton and storeHandle and currentUser.can('commerce-manageCatalogPricingRules') %}
    <div class="mt-m">
-	  <a href="{{ cpUrl('commerce/store-management/' ~ storeHandle ~ '/pricing-rules/new') }}" class="btn add icon dashed wrap" target="_blank">{{ 'New Catalog Pricing Rule'|t('pricing-rules-relationship') }}</a>
+      <a href="{{ cpUrl('commerce/store-management/' ~ storeHandle ~ '/pricing-rules/new') }}" class="btn add icon dashed wrap" target="_blank" rel="noopener">{{ 'New Catalog Pricing Rule'|t('pricing-rules-relationship') }} <span class="visually-hidden">{{ '(opens in a new tab)'|t('pricing-rules-relationship') }}</span></a>
    </div>
 {% endif %}

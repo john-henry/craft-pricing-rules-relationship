@@ -2,7 +2,7 @@
   "name": "johnhenry/craft-pricing-rules-relationship",
   "description": "A field to add relationships between Commerce Pricing Rules and an element",
   "type": "craft-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "keywords": [
     "craft",
     "cms",
@@ -20,7 +20,7 @@
       "homepage": "https://johnhenry.ie"
     }
   ],
-  "homepage": "https://plugins.johnhenry.ie/pricing-rules-relationship",
+  "homepage": "https://johnhenry.ie/plugins/pricing-rules-relationship/",
   "require": {
     "php": "^8.2 || ^8.3 || ^8.4",
     "craftcms/cms": "^5.0",
@@ -52,7 +52,7 @@
     "sort-packages": true
   },
   "support": {
-    "docs": "https://plugins.johnhenry.ie/pricing-rules-relationship",
+    "docs": "https://johnhenry.ie/plugins/pricing-rules-relationship/",
     "source": "https://github.com/john-henry/craft-pricing-rules-relationship",
     "issues": "https://github.com/john-henry/craft-pricing-rules-relationship/issues"
   },
@@ -61,7 +61,7 @@
     "handle": "pricing-rules-relationship",
     "developer": "John Henry",
     "developerUrl": "https://johnhenry.ie",
-    "documentationUrl": "https://plugins.johnhenry.ie/pricing-rules-relationship/",
+    "documentationUrl": "https://johnhenry.ie/plugins/pricing-rules-relationship/",
     "changelogUrl": "https://github.com/john-henry/craft-pricing-rules-relationship/blob/craft-5/CHANGELOG.md",
     "class": "johnhenry\\pricingrulesrelationship\\PricingRulesRelationship"
   }
