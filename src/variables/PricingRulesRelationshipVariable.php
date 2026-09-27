@@ -7,7 +7,6 @@
 namespace johnhenry\pricingrulesrelationship\variables;
 
 use johnhenry\pricingrulesrelationship\PricingRulesRelationship;
-use johnhenry\pricingrulesrelationship\services\PricingRulesRelationshipService;
 use yii\base\InvalidConfigException;
 
 /**
@@ -23,36 +22,37 @@ class PricingRulesRelationshipVariable
     // =========================================================================
 
     /**
-     * Returns the primary-owner IDs of products matching the given pricing rules.
+     * Returns the IDs of products in the current store matching the given
+     * pricing rules.
      *
-     * @param array $selectedSaleIds Catalog pricing rule IDs to match against.
+     * @param mixed $selectedSaleIds Catalog pricing rule IDs, usually the field value. Anything
+     *                               that isn't a list counts as none.
      * @param bool $hasStock Whether to restrict results to in-stock variants.
-     * @return array<int>
-     * @throws InvalidConfigException
+     * @return array<int> The product IDs.
+     * @throws InvalidConfigException If the service can't be resolved.
+     * @author John Henry Donovan <info@johnhenry.ie>
+     * @since 1.1.0
      */
-    public function getSaleIds(array $selectedSaleIds, bool $hasStock = false): array
+    public function getProductIds(mixed $selectedSaleIds, bool $hasStock = false): array
     {
-        return $this->_getService()->getMatchingProductsIds($selectedSaleIds, $hasStock);
+        return PricingRulesRelationship::getInstance()
+            ->getPricingRulesRelationshipService()
+            ->getMatchingProductsIds(is_array($selectedSaleIds) ? $selectedSaleIds : [], $hasStock);
     }
 
-    // =========================================================================
-    // Private Methods
-    // =========================================================================
-
     /**
-     * Returns the pricing rules relationship service.
+     * Returns the IDs of products in the current store matching the given
+     * pricing rules. Kept for existing templates; `getProductIds()` is the same.
      *
-     * Resolves the service through a typed getter rather than magic property
-     * access so PHPStan can narrow the return type (it cannot resolve `__get()`).
-     *
-     * @return PricingRulesRelationshipService
-     * @throws InvalidConfigException
+     * @param mixed $selectedSaleIds Catalog pricing rule IDs, usually the field value.
+     * @param bool $hasStock Whether to restrict results to in-stock variants.
+     * @return array<int> The product IDs.
+     * @throws InvalidConfigException If the service can't be resolved.
+     * @author John Henry Donovan <info@johnhenry.ie>
+     * @since 1.0.0
      */
-    private function _getService(): PricingRulesRelationshipService
+    public function getSaleIds(mixed $selectedSaleIds, bool $hasStock = false): array
     {
-        $service = PricingRulesRelationship::getInstance()->get('pricingRulesRelationshipService');
-        assert($service instanceof PricingRulesRelationshipService);
-
-        return $service;
+        return $this->getProductIds($selectedSaleIds, $hasStock);
     }
 }

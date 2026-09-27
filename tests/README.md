@@ -26,11 +26,10 @@ ddev exec vendor/bin/pest plugins/craft-pricing-rules-relationship/tests \
   --test-directory=plugins/craft-pricing-rules-relationship/tests
 ```
 
-Run only integration tests:
+Run only integration tests (the test directory stays the suite root, so `tests/Pest.php` still loads):
 
 ```shell
-ddev exec vendor/bin/pest plugins/craft-pricing-rules-relationship/tests/Integration \
-  --test-directory=plugins/craft-pricing-rules-relationship/tests/Integration
+ddev exec composer test:prr -- --filter=Integration
 ```
 
 To filter to a specific describe block or test:

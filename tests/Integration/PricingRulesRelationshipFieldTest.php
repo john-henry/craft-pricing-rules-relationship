@@ -10,6 +10,11 @@ use craft\models\Section_SiteSettings;
 use johnhenry\pricingrulesrelationship\fields\PricingRulesRelationshipField;
 use markhuot\craftpest\factories\User as UserFactory;
 
+// Field inputs are control panel templates.
+beforeEach(function() {
+    Craft::$app->getView()->setTemplateMode(craft\web\View::TEMPLATE_MODE_CP);
+});
+
 // ---------------------------------------------------------------------------
 // Field save → reload round-trip
 //
@@ -38,35 +43,6 @@ function makeEntryOn(Section $section): Entry
     return $entry;
 }
 
-/**
- * Render the field's input partial with a supplied option set and return the HTML.
- * storeHandle is left null so the "New Catalog Pricing Rule" button is skipped.
- */
-function renderPrrInput(array $value, array $sales, int $missingCount): string
-{
-    $field = new PricingRulesRelationshipField();
-    $field->handle = 'prrStale';
-
-    $view = Craft::$app->getView();
-    $originalMode = $view->getTemplateMode();
-    $view->setTemplateMode(craft\web\View::TEMPLATE_MODE_CP);
-
-    try {
-        return $view->renderTemplate('pricing-rules-relationship/_input', [
-            'field' => $field,
-            'value' => $value,
-            'options' => [
-                'error' => null,
-                'sales' => $sales,
-                'storeHandle' => null,
-            ],
-            'storeHandle' => null,
-            'missingCount' => $missingCount,
-        ]);
-    } finally {
-        $view->setTemplateMode($originalMode);
-    }
-}
 
 describe('PricingRulesRelationshipField save/reload round-trip', function() {
     beforeEach(function() {
@@ -138,6 +114,29 @@ describe('PricingRulesRelationshipField save/reload round-trip', function() {
         expect($value)->toBe([3, 27]);
     });
 
+    it('lets an element query find entries by the rules they hold', function() {
+        $save = function(array $ids): int {
+            $entry = makeEntryOn($this->section);
+            $entry->setFieldValue($this->field->handle, $ids);
+            Craft::$app->getElements()->saveElement($entry);
+
+            return $entry->id;
+        };
+
+        $a = $save([3, 27]);
+        $b = $save([27]);
+        $c = $save([]);
+        $handle = $this->field->handle;
+        $find = fn(mixed $param): array => sortedIds(Entry::find()->sectionId($this->section->id)->status(null)->$handle($param)->ids());
+
+        expect($find(3))->toBe([$a])
+            ->and($find(27))->toBe(sortedIds([$a, $b]))
+            ->and($find([3, 99]))->toBe([$a])
+            ->and($find(['and', 3, 27]))->toBe([$a])
+            ->and($find('not 3'))->toBe(sortedIds([$b, $c]))
+            ->and($find(':notempty:'))->toBe(sortedIds([$a, $b]));
+    });
+
     it('reads an empty selection back as an empty array', function() {
         $entry = makeEntryOn($this->section);
         $entry->setFieldValue($this->field->handle, []);
@@ -149,86 +148,147 @@ describe('PricingRulesRelationshipField save/reload round-trip', function() {
         expect($reloaded->getFieldValue($this->field->handle))->toBe([]);
     });
 
-    it('renders the correct checked state per option after reload', function() {
-        // A logged-in user is required for the template's currentUser.can() gate.
+    it('ticks the saved rules when the input is rendered', function() {
         $this->actingAs(UserFactory::factory()->admin(true)->create());
+        $a = insertPricingRule(['name' => 'Rule A']);
+        $b = insertPricingRule(['name' => 'Rule B']);
 
         $entry = makeEntryOn($this->section);
-        $entry->setFieldValue($this->field->handle, ['3', '27']);
-
+        $entry->setFieldValue($this->field->handle, [$a]);
         Craft::$app->getElements()->saveElement($entry);
 
         $reloaded = Entry::find()->id($entry->id)->status(null)->one();
-        $value = $reloaded->getFieldValue($this->field->handle);
+        $html = $this->field->getInputHtml($reloaded->getFieldValue($this->field->handle), $reloaded);
 
-        // Render the input partial directly with a known option set so the
-        // assertion does not depend on which pricing rules exist in the store.
-        // Plugin CP templates resolve under the CP template mode.
-        $view = Craft::$app->getView();
-        $originalMode = $view->getTemplateMode();
-        $view->setTemplateMode(craft\web\View::TEMPLATE_MODE_CP);
-
-        try {
-            $html = $view->renderTemplate('pricing-rules-relationship/_input', [
-                'field' => $this->field,
-                'value' => $value,
-                'options' => [
-                    'error' => null,
-                    'sales' => [
-                        ['id' => 3, 'name' => 'Rule 3', 'dateTo' => null],
-                        ['id' => 5, 'name' => 'Rule 5', 'dateTo' => null],
-                        ['id' => 27, 'name' => 'Rule 27', 'dateTo' => null],
-                    ],
-                    'storeHandle' => 'primary',
-                ],
-                'storeHandle' => 'primary',
-                'missingCount' => 0,
-            ]);
-        } finally {
-            $view->setTemplateMode($originalMode);
-        }
-
-        // Selected options (3, 27) must be checked; the unselected one (5) must not be.
         expect($html)
-            ->toContain('value="3"')
-            ->toContain('value="27"')
-            ->toMatch('/value="3"[^>]*checked/')
-            ->toMatch('/value="27"[^>]*checked/')
-            ->not->toMatch('/value="5"[^>]*checked/');
+            ->toMatch('/value="' . $a . '"[^>]*checked/')
+            ->not->toMatch('/value="' . $b . '"[^>]*checked/');
     });
+
 });
 
 // ---------------------------------------------------------------------------
-// Stale-rule warning
+// Saving from the edit form
 //
-// When a rule that was ticked earlier has since been deleted in Commerce, the
-// input template shows a warning that the stale selection will drop off on the
-// next save. These render the partial directly with a supplied option set so
-// the assertions don't depend on which rules happen to exist in the store.
-// storeHandle is passed as null so the "New Catalog Pricing Rule" button block
-// is skipped and no logged-in user is needed.
+// These go through setFieldValueFromRequest(), the path the control panel
+// uses, so the hidden empty input, the kept hidden rules and the permission
+// filtering are all exercised as they are in a real save.
 // ---------------------------------------------------------------------------
 
-describe('PricingRulesRelationshipField stale-rule warning', function() {
-    it('warns when a saved rule is no longer in the available options', function() {
-        $html = renderPrrInput(
-            value: [3, 99],
-            sales: [['id' => 3, 'name' => 'Rule 3', 'dateTo' => null]],
-            missingCount: 1,
-        );
-
-        expect($html)
-            ->toContain('class="warning has-icon"')
-            ->toContain('no longer available');
+describe('PricingRulesRelationshipField saving from the edit form', function() {
+    beforeEach(function() {
+        $this->actingAs(UserFactory::factory()->admin(true)->create());
+        $this->field = new PricingRulesRelationshipField(['handle' => 'prrForm']);
     });
 
-    it('shows no warning when every saved rule still exists', function() {
-        $html = renderPrrInput(
-            value: [3],
-            sales: [['id' => 3, 'name' => 'Rule 3', 'dateTo' => null]],
-            missingCount: 0,
-        );
+    it('clears the field when every box is unticked', function() {
+        $rule = insertPricingRule();
 
-        expect($html)->not->toContain('no longer available');
+        expect($this->field->normalizeValueFromRequest('', null))->toBe([])
+            ->and($this->field->getInputHtml([$rule], null))->toContain('type="hidden" name="prrForm" value=""');
+    });
+
+    it('keeps an expired or switched-off rule the editor was not shown', function() {
+        $live = insertPricingRule(['name' => 'Live']);
+        $expired = insertPricingRule(['name' => 'Expired', 'dateTo' => gmdate('Y-m-d H:i:s', strtotime('-1 day'))]);
+        $off = insertPricingRule(['name' => 'Off', 'enabled' => 0]);
+
+        $html = $this->field->getInputHtml([$live, $expired, $off], null);
+
+        expect($html)->not->toContain('Expired')
+            ->not->toContain('>Off<')
+            ->not->toContain('warning has-icon');
+
+        $saved = PrrFieldProbe::fromRequest($this->field, [], [$live, $expired, $off]);
+
+        expect(sortedIds($saved))->toEqual(sortedIds([$expired, $off]));
+    });
+
+    it('drops a rule deleted from Commerce, and says so first', function() {
+        $kept = insertPricingRule();
+        $deleted = insertPricingRule();
+        Craft::$app->getDb()->createCommand()->delete('{{%commerce_catalogpricingrules}}', ['id' => $deleted])->execute();
+        clearPricingRuleMemo();
+
+        expect($this->field->getInputHtml([$kept, $deleted], null))->toContain('deleted from Commerce');
+
+        $saved = PrrFieldProbe::fromRequest($this->field, [(string)$kept], [$kept, $deleted]);
+
+        expect($saved)->toBe([$kept]);
+    });
+
+    it('ignores a posted rule the editor was not offered', function() {
+        $offered = insertPricingRule();
+        $expired = insertPricingRule(['dateTo' => gmdate('Y-m-d H:i:s', strtotime('-1 day'))]);
+
+        $saved = PrrFieldProbe::fromRequest($this->field, [(string)$offered, (string)$expired, '999999999'], []);
+
+        expect($saved)->toBe([$offered]);
+    });
+
+    it('offers a rule that has not started yet, marked with its start date', function() {
+        insertPricingRule(['name' => 'Next Month', 'dateFrom' => gmdate('Y-m-d H:i:s', strtotime('+30 days'))]);
+
+        expect($this->field->getInputHtml([], null))->toContain('Next Month')->toContain('starts');
     });
 });
+
+describe('PricingRulesRelationshipField for an editor without promotions permission', function() {
+    it('only offers rules open to every customer', function() {
+        $this->actingAs(UserFactory::factory()->create());
+        $field = new PricingRulesRelationshipField(['handle' => 'prrEditor', 'showNewRuleButton' => true]);
+
+        $group = new craft\models\UserGroup(['name' => 'PRR Hidden ' . uniqid(), 'handle' => 'prrHidden' . str_replace('.', '', uniqid('', true))]);
+        Craft::$app->getUserGroups()->saveGroup($group);
+        $conditionRule = new craft\elements\conditions\users\GroupConditionRule();
+        $conditionRule->setValues([$group->uid]);
+        $condition = new craft\commerce\elements\conditions\customers\CatalogPricingRuleCustomerCondition();
+        $condition->setConditionRules([$conditionRule]);
+
+        insertPricingRule(['name' => 'Everyone Sale']);
+        insertPricingRule(['name' => 'Acme Contract', 'customerCondition' => craft\helpers\Json::encode($condition->getConfig())]);
+
+        $html = $field->getInputHtml([], null);
+
+        expect($html)->toContain('Everyone Sale')
+            ->not->toContain('Acme Contract')
+            ->not->toContain('New Catalog Pricing Rule');
+    });
+});
+
+describe('PricingRulesRelationshipField over GraphQL', function() {
+    it('describes its value as a list of rule IDs', function() {
+        $field = new PricingRulesRelationshipField();
+
+        expect((string)$field->getContentGqlType())->toBe('[Int]')
+            ->and((string)$field->getContentGqlMutationArgumentType())->toBe('[Int]');
+    });
+});
+
+/**
+ * Runs a posted value through the field the way the edit form does, on an
+ * element that already holds `$stored`.
+ */
+class PrrFieldProbe
+{
+    /**
+     * @param int[] $stored
+     * @return int[]
+     */
+    public static function fromRequest(PricingRulesRelationshipField $field, mixed $posted, array $stored): array
+    {
+        $element = new class($field, $stored) extends Entry {
+            public function __construct(private PricingRulesRelationshipField $probeField, private array $probeStored)
+            {
+                parent::__construct();
+            }
+
+            public function getFieldValue(string $fieldHandle): mixed
+            {
+                return $fieldHandle === $this->probeField->handle ? $this->probeStored : parent::getFieldValue($fieldHandle);
+            }
+        };
+
+        return $field->normalizeValueFromRequest($posted, $element);
+    }
+}

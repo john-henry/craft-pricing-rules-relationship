@@ -1,31 +1,28 @@
-{# =========================================================================
-   Pricing Rules Relationship: Field Input
-   Renders the store's active catalog pricing rules as a labelled checkbox
-   group, with informational states for a missing store, an empty rule list,
-   and stale (deleted) rule references.
-   ========================================================================= #}
-
-{%- set storeError = options.error ?? null %}
-{%- set rules = options.sales ?? [] %}
 {%- set value = value ?? [] %}
-{%- set missingCount = missingCount ?? 0 %}
+{%- set deletedCount = deletedCount ?? 0 %}
 {%- set emptyText = field.defaultText|default('')|trim ?: 'No active pricing rules available'|t('pricing-rules-relationship') %}
 {%- set noticeId = field.handle ~ '-notice' %}
 
 {% if storeError %}
    <p id="{{ noticeId }}" class="light">
-      {{ storeError|e }}
+      {{ storeError }}
    </p>
 {% elseif rules is empty %}
    <p id="{{ noticeId }}" class="light">
       {{ emptyText }}
    </p>
 {% else %}
+   {% if legacySales ?? false %}
+      <p class="warning has-icon">
+         {{ 'This store still uses legacy Sales, so Commerce is ignoring its catalog pricing rules.'|t('pricing-rules-relationship') }}
+      </p>
+   {% endif %}
+   {{ hiddenInput(field.handle, '') }}
    <div
       class="checkbox-group"
       role="group"
       aria-label="{{ 'Available pricing rules'|t('pricing-rules-relationship') }}"
-      {% if missingCount %}aria-describedby="{{ noticeId }}"{% endif %}
+      {% if deletedCount %}aria-describedby="{{ noticeId }}"{% endif %}
    >
       {% for rule in rules %}
          <div>
@@ -38,21 +35,26 @@
                {% if rule.id in value %}checked{% endif %}
             >
             <label class="flex flex-nowrap items-center gap-xs" for="{{ field.handle }}-{{ rule.id }}"><span>{{ rule.name }}</span>
+               {% if rule.startsLater %}
+                  <span class="light">
+                     <span class="smalltext">({{ 'starts {date}'|t('pricing-rules-relationship', { date: rule.startsLater|datetime('short') }) }})</span>
+                  </span>
+               {% endif %}
                {% if field.showRuleExpiryDates and rule.dateTo %}
                   <span class="light">
-                     <span class="smalltext">({{ 'expires'|t('pricing-rules-relationship') }} {{ rule.dateTo|datetime('short') }})</span>
+                     <span class="smalltext">({{ 'expires {date}'|t('pricing-rules-relationship', { date: rule.dateTo|datetime('short') }) }})</span>
                   </span>
                {% endif %}</label>
          </div>
       {% endfor %}
    </div>
-   {% if missingCount %}
+   {% if deletedCount %}
       <p id="{{ noticeId }}" class="warning has-icon">
-         {{ '{count, plural, one{# previously selected rule is no longer available.} other{# previously selected rules are no longer available.}}'|t('pricing-rules-relationship', { count: missingCount }) }}
+         {{ '{count, plural, one{# selected rule has been deleted from Commerce and will be removed when you save.} other{# selected rules have been deleted from Commerce and will be removed when you save.}}'|t('pricing-rules-relationship', { count: deletedCount }) }}
       </p>
    {% endif %}
 {% endif %}
-{% if field.showNewRuleButton and storeHandle and currentUser.can('commerce-manageCatalogPricingRules') %}
+{% if field.showNewRuleButton and storeHandle and canCreateRules %}
    <div class="mt-m">
       <a href="{{ cpUrl('commerce/store-management/' ~ storeHandle ~ '/pricing-rules/new') }}" class="btn add icon dashed wrap" target="_blank" rel="noopener">{{ 'New Catalog Pricing Rule'|t('pricing-rules-relationship') }} <span class="visually-hidden">{{ '(opens in a new tab)'|t('pricing-rules-relationship') }}</span></a>
    </div>

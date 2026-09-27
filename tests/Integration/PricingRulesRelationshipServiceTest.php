@@ -51,14 +51,12 @@ describe('PricingRulesRelationshipService::getMatchingProductsIds(): expiry', fu
     });
 
     it('includes a rule with no expiry date (dateTo is null)', function() {
-        // Result may be empty if there are no Commerce variants in the test database,
-        // but the rule must not be filtered out; the return value must be an array.
         $id = insertPricingRule(['dateTo' => null]);
 
         $result = PricingRulesRelationship::getInstance()->pricingRulesRelationshipService
             ->getMatchingProductsIds([$id]);
 
-        expect($result)->toBeArray();
+        expect(sortedIds($result))->toEqual(expectedOwnerIds())->not->toBeEmpty();
     });
 
     it('includes a rule whose dateTo is in the future', function() {
@@ -67,7 +65,7 @@ describe('PricingRulesRelationshipService::getMatchingProductsIds(): expiry', fu
         $result = PricingRulesRelationship::getInstance()->pricingRulesRelationshipService
             ->getMatchingProductsIds([$id]);
 
-        expect($result)->toBeArray();
+        expect(sortedIds($result))->toEqual(expectedOwnerIds())->not->toBeEmpty();
     });
 
     it('only returns results for non-expired rules when a mix is given', function() {
@@ -112,14 +110,12 @@ describe('PricingRulesRelationshipService::getMatchingProductsIds(): enabled and
     });
 
     it('includes a rule whose start date has already passed', function() {
-        // Result may be empty without variants in the test database, but the
-        // rule must not be filtered out by the start-date check.
         $id = insertPricingRule(['dateFrom' => gmdate('Y-m-d H:i:s', strtotime('-1 day'))]);
 
         $result = PricingRulesRelationship::getInstance()->pricingRulesRelationshipService
             ->getMatchingProductsIds([$id]);
 
-        expect($result)->toBeArray();
+        expect(sortedIds($result))->toEqual(expectedOwnerIds())->not->toBeEmpty();
     });
 });
 
@@ -169,6 +165,17 @@ describe('PricingRulesRelationshipService::getMatchingProductsIds(): malformed c
             ->getMatchingProductsIds([$id]);
 
         expect($result)->toBeArray();
+    });
+
+    it('keeps working rules working when another rule in the store is broken', function() {
+        $broken = insertPricingRule(['name' => 'Broken', 'customerCondition' => '{broken json]']);
+        $good = insertPricingRule(['name' => 'Good']);
+
+        $service = PricingRulesRelationship::getInstance()->getPricingRulesRelationshipService();
+        $storeId = (int)craft\commerce\Plugin::getInstance()->getStores()->getCurrentStore()->id;
+
+        expect(array_keys($service->getEnabledRules($storeId, [$broken, $good])))->toBe([$good])
+            ->and(sortedIds($service->getMatchingProductsIds([$broken, $good])))->toEqual(expectedOwnerIds())->not->toBeEmpty();
     });
 });
 
@@ -232,13 +239,10 @@ describe('PricingRulesRelationshipService::getMatchingProductsIds(): customer co
 
         $id = insertPricingRule(['customerCondition' => $this->customerConditionJson]);
 
-        // The rule is NOT filtered out by the customer gate, so the service
-        // proceeds to variant matching. Result may be empty if the test DB has
-        // no variants, but the call must complete and return an array.
         $result = PricingRulesRelationship::getInstance()->pricingRulesRelationshipService
             ->getMatchingProductsIds([$id]);
 
-        expect($result)->toBeArray();
+        expect(sortedIds($result))->toEqual(expectedOwnerIds())->not->toBeEmpty();
     });
 
     it('still includes a rule with no customer condition regardless of user', function() {
@@ -247,7 +251,7 @@ describe('PricingRulesRelationshipService::getMatchingProductsIds(): customer co
         $result = PricingRulesRelationship::getInstance()->pricingRulesRelationshipService
             ->getMatchingProductsIds([$id]);
 
-        expect($result)->toBeArray();
+        expect(sortedIds($result))->toEqual(expectedOwnerIds())->not->toBeEmpty();
     });
 });
 
