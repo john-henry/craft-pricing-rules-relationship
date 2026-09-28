@@ -1,17 +1,20 @@
 {
   "name": "johnhenry/craft-pricing-rules-relationship",
-  "description": "A field to add relationships between Commerce Pricing Rules and an element",
+  "description": "A field that ties Craft Commerce catalog pricing rules to any element, so offer pages list the products those rules cover.",
   "type": "craft-plugin",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "keywords": [
-    "craft",
-    "cms",
-    "craftcms",
     "craft-commerce",
-    "craft-plugin",
-    "sales relationship",
     "catalog pricing rules",
-    "promotional sales"
+    "special offers",
+    "sale page",
+    "promotions",
+    "seasonal sale",
+    "discounted products",
+    "offer pages",
+    "landing pages",
+    "relations field",
+    "pricing rules field"
   ],
   "license": "MIT",
   "authors": [
@@ -28,7 +31,8 @@
   },
   "require-dev": {
     "craftcms/phpstan": "dev-main",
-    "craftcms/ecs": "dev-main"
+    "craftcms/ecs": "dev-main",
+    "phpstan/phpstan": "^2.2"
   },
   "minimum-stability": "stable",
   "prefer-stable": true,

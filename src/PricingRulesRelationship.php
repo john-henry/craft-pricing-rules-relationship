@@ -7,37 +7,41 @@
 namespace johnhenry\pricingrulesrelationship;
 
 use craft\base\Plugin as BasePlugin;
-use craft\events\RegisterComponentTypesEvent;
-use craft\services\Fields;
-use craft\web\twig\variables\CraftVariable;
-use johnhenry\pricingrulesrelationship\fields\PricingRulesRelationshipField;
+use johnhenry\pricingrulesrelationship\base\PluginTrait;
 use johnhenry\pricingrulesrelationship\services\PricingRulesRelationshipService;
-use johnhenry\pricingrulesrelationship\variables\PricingRulesRelationshipVariable;
-use yii\base\Event;
+use yii\base\InvalidConfigException;
 
 /**
  * Pricing Rules Relationship plugin: relates Commerce catalog pricing rules to elements.
  *
  * @method static PricingRulesRelationship getInstance()
- * @property PricingRulesRelationshipService $pricingRulesRelationshipService
+ * @property-read PricingRulesRelationshipService $pricingRulesRelationshipService
  * @author John Henry Donovan <info@johnhenry.ie>
  * @since 1.0.0
  */
 class PricingRulesRelationship extends BasePlugin
 {
     // =========================================================================
-    // Properties
+    // Traits
     // =========================================================================
 
-    /** @var PricingRulesRelationship */
-    public static PricingRulesRelationship $plugin;
+    use PluginTrait;
 
     // =========================================================================
-    // Static Methods
+    // Static Properties
     // =========================================================================
 
     /**
+     * @var PricingRulesRelationship The plugin instance.
+     */
+    public static PricingRulesRelationship $plugin;
+
+    /**
      * @inheritdoc
+     *
+     * @return array The plugin's component configuration.
+     * @author John Henry Donovan <info@johnhenry.ie>
+     * @since 1.0.0
      */
     public static function config(): array
     {
@@ -54,6 +58,10 @@ class PricingRulesRelationship extends BasePlugin
 
     /**
      * @inheritdoc
+     *
+     * @return void
+     * @author John Henry Donovan <info@johnhenry.ie>
+     * @since 1.0.0
      */
     public function init(): void
     {
@@ -63,37 +71,22 @@ class PricingRulesRelationship extends BasePlugin
 
         $this->_registerField();
         $this->_registerVariable();
-    }
-
-    // =========================================================================
-    // Private Methods
-    // =========================================================================
-
-    /**
-     * Registers the field type.
-     */
-    private function _registerField(): void
-    {
-        Event::on(
-            Fields::class,
-            Fields::EVENT_REGISTER_FIELD_TYPES,
-            function(RegisterComponentTypesEvent $event) {
-                $event->types[] = PricingRulesRelationshipField::class;
-            }
-        );
+        $this->_registerGqlQueries();
     }
 
     /**
-     * Registers the Twig variable.
+     * Returns the pricing rules relationship service.
+     *
+     * @return PricingRulesRelationshipService The service.
+     * @throws InvalidConfigException If the component cannot be resolved.
+     * @author John Henry Donovan <info@johnhenry.ie>
+     * @since 1.0.4
      */
-    private function _registerVariable(): void
+    public function getPricingRulesRelationshipService(): PricingRulesRelationshipService
     {
-        Event::on(
-            CraftVariable::class,
-            CraftVariable::EVENT_INIT,
-            static function(Event $event) {
-                $event->sender->set('pricingRulesRelationship', PricingRulesRelationshipVariable::class);
-            }
-        );
+        $component = $this->get('pricingRulesRelationshipService');
+        assert($component instanceof PricingRulesRelationshipService);
+
+        return $component;
     }
 }
