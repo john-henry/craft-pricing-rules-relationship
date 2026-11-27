@@ -254,6 +254,62 @@ describe('PricingRulesRelationshipField for an editor without promotions permiss
             ->not->toContain('Acme Contract')
             ->not->toContain('New Catalog Pricing Rule');
     });
+
+    it('says the rules are hidden, not missing, when every live rule is limited to some customers', function() {
+        $this->actingAs(UserFactory::factory()->create());
+        $field = new PricingRulesRelationshipField(['handle' => 'prrEditor']);
+
+        // Only the group-scoped rule below may be live, whatever the test database holds.
+        Craft::$app->getDb()->createCommand()->update('{{%commerce_catalogpricingrules}}', ['enabled' => 0])->execute();
+
+        $group = new craft\models\UserGroup(['name' => 'PRR Hidden ' . uniqid(), 'handle' => 'prrHidden' . str_replace('.', '', uniqid('', true))]);
+        Craft::$app->getUserGroups()->saveGroup($group);
+        $conditionRule = new craft\elements\conditions\users\GroupConditionRule();
+        $conditionRule->setValues([$group->uid]);
+        $condition = new craft\commerce\elements\conditions\customers\CatalogPricingRuleCustomerCondition();
+        $condition->setConditionRules([$conditionRule]);
+        insertPricingRule(['name' => 'Acme Contract', 'customerCondition' => craft\helpers\Json::encode($condition->getConfig())]);
+
+        expect($field->getInputHtml([], null))
+            ->toContain('Manage promotions permission')
+            ->not->toContain('No pricing rules are running or scheduled')
+            ->not->toContain('Acme Contract');
+    });
+});
+
+describe('PricingRulesRelationshipField notices', function() {
+    beforeEach(function() {
+        $this->actingAs(UserFactory::factory()->admin(true)->create());
+        $this->field = new PricingRulesRelationshipField(['handle' => 'prrNotice']);
+    });
+
+    it('reports a deleted rule even when no rules are offered, and drops it on save', function() {
+        Craft::$app->getDb()->createCommand()->update('{{%commerce_catalogpricingrules}}', ['enabled' => 0])->execute();
+        $off = insertPricingRule(['enabled' => 0]);
+        $deleted = insertPricingRule();
+        Craft::$app->getDb()->createCommand()->delete('{{%commerce_catalogpricingrules}}', ['id' => $deleted])->execute();
+        clearPricingRuleMemo();
+
+        $html = $this->field->getInputHtml([$off, $deleted], null);
+
+        // The empty input is what makes the save drop the deleted rule.
+        expect($html)->toContain('deleted from Commerce')
+            ->toContain('type="hidden" name="prrNotice" value=""')
+            ->and(PrrFieldProbe::fromRequest($this->field, '', [$off, $deleted]))->toBe([$off]);
+    });
+
+    it('describes the first checkbox with the deleted-rule notice, without a second group', function() {
+        $kept = insertPricingRule(['name' => 'Kept']);
+        $deleted = insertPricingRule();
+        Craft::$app->getDb()->createCommand()->delete('{{%commerce_catalogpricingrules}}', ['id' => $deleted])->execute();
+        clearPricingRuleMemo();
+
+        $html = $this->field->getInputHtml([$kept, $deleted], null);
+
+        expect($html)->not->toContain('role="group"')
+            ->and(substr_count($html, 'aria-describedby="prrNotice-notice"'))->toBe(1)
+            ->and($html)->toContain('id="prrNotice-notice"');
+    });
 });
 
 describe('PricingRulesRelationshipField over GraphQL', function() {

@@ -5,27 +5,30 @@
 
 # Pricing Rules Relationship for Craft Commerce
 
-A field that ties Craft Commerce catalog pricing rules to any element. Tick the rules on an entry and your template gets the products those rules cover, so a Special Offers page fills itself and keeps itself right as rules start and expire.
+Pricing Rules Relationship adds a field that links Craft Commerce catalog pricing rules to an entry,
+or to any other element. Tick the rules that apply and your template gets the products they cover.
+When a rule starts or ends, the page changes with it, so nobody has to go back and fix it by hand.
 
 ## Features
 
-- **Relate rules to anything**: Link Commerce catalog pricing rules to entries, products, categories, or any custom element type
-- **Plain checkbox field**: Editors tick the rules they want from a straightforward list, no fuss
-- **Expiry-aware**: Expired rules drop out of your templates on their own, so nobody has to untick anything by hand. You can show each rule's expiry date beside it too
-- **Respects customer groups**: A rule scoped to a customer group only returns its products to users in that group, so nothing leaks across groups
-- **In-stock filtering**: Pass `hasStock: true` and out-of-stock products are left off the list
-- **Quick rule creation**: A "New Catalog Pricing Rule" button drops editors straight into Commerce to add one
-- **Template-ready**: `craft.pricingRulesRelationship.getSaleIds()` hands you the matching product IDs, ready for a product query
-
-## Perfect For
-
-- Tying pricing rules to specific content
-- Linking catalog pricing rules to marketing campaigns
-- Keeping your pricing strategies organised across the commerce site
+- **Any element:** put the field on entries, products, categories or your own element types.
+- **A checkbox list for editors:** they tick the rules that apply. Each rule can show its end date,
+  and one that hasn't started yet shows its start date, so a sale can be set up ahead of time.
+- **Rules come and go on their own:** expired, switched-off and not-yet-started rules give no
+  products, so nobody has to untick anything. A rule that's switched back on or extended comes back
+  by itself.
+- **Customer groups:** a rule limited to a customer group only returns its products to customers in
+  that group.
+- **Stock:** pass `true` as the second argument to `getProductIds()` and out-of-stock products are left out.
+- **New rule button:** editors who can create pricing rules get a button that opens a new rule in
+  Commerce, in a new tab.
+- **Twig, element queries and GraphQL:** `craft.pricingRulesRelationship.getProductIds()` gives you
+  the product IDs for a product query, the field works as an element query param, and
+  `pricingRuleProducts` does the same job for a headless front end.
 
 ## Documentation
 
-Full documentation is at [johnhenry.ie/plugins/pricing-rules-relationship/docs](https://johnhenry.ie/plugins/pricing-rules-relationship/docs/getting-started/overview).
+The full documentation is at [johnhenry.ie/plugins/pricing-rules-relationship/docs](https://johnhenry.ie/plugins/pricing-rules-relationship/docs/getting-started/overview).
 
 ## Requirements
 
@@ -35,11 +38,11 @@ Full documentation is at [johnhenry.ie/plugins/pricing-rules-relationship/docs](
 
 ## Accessibility
 
-How accessible the plugin is, what's been checked, and how to report a problem are all in the [accessibility statement](https://github.com/john-henry/craft-pricing-rules-relationship/blob/craft-5/ACCESSIBILITY.md).
+How accessible the plugin is, what's been checked and how to report a problem are all in the [accessibility statement](https://github.com/john-henry/craft-pricing-rules-relationship/blob/craft-5/ACCESSIBILITY.md).
 
 ## Support
 
-Need a hand? Open an issue on the [GitHub Issues page](https://github.com/john-henry/craft-pricing-rules-relationship/issues).
+If you need a hand, open an issue on the [GitHub Issues page](https://github.com/john-henry/craft-pricing-rules-relationship/issues).
 
 ## License
 

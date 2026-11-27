@@ -2,7 +2,7 @@
   "name": "johnhenry/craft-pricing-rules-relationship",
   "description": "A field that ties Craft Commerce catalog pricing rules to any element, so offer pages list the products those rules cover.",
   "type": "craft-plugin",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "keywords": [
     "craft-commerce",
     "catalog pricing rules",
