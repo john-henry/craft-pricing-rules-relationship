@@ -4,7 +4,7 @@ Pricing Rules Relationship is a plugin for Craft CMS 5. This statement sets out 
 
 ## What this covers
 
-This statement covers Pricing Rules Relationship 1.1.0:
+This statement covers Pricing Rules Relationship 1.1.1:
 
 - the Pricing Rules Relationship field and its settings
 
@@ -19,7 +19,7 @@ WCAG 2.2 level AA. Pricing Rules Relationship adds to the Craft control panel, w
 
 ## How far it meets it
 
-I believe it meets WCAG 2.2 AA, and the review found no issues. It hasn't been tested with assistive technology yet, though, so I'm not claiming full conformance until it has.
+The September review of 1.1.0 found no issues against WCAG 2.2 AA. In 1.1.1 the field's rule list and its messages changed, and those changes haven't been reviewed yet. Nothing has been tested with assistive technology yet either, so I'm not claiming full conformance until both are done.
 
 ## How it was checked
 
@@ -38,4 +38,4 @@ If something in Pricing Rules Relationship is hard or impossible for you to use,
 
 ## Last reviewed
 
-27 September 2026, for version 1.1.0.
+27 September 2026, for version 1.1.0. The changes in 1.1.1 haven't been reviewed yet.

@@ -1,29 +1,28 @@
 {%- set value = value ?? [] %}
 {%- set deletedCount = deletedCount ?? 0 %}
-{%- set emptyText = field.defaultText|default('')|trim ?: 'No active pricing rules available'|t('pricing-rules-relationship') %}
+{%- set emptyText = field.defaultText|default('')|trim ?: 'No pricing rules are running or scheduled in this store.'|t('pricing-rules-relationship') %}
 {%- set noticeId = field.handle ~ '-notice' %}
 
+{{ hiddenInput(field.handle, '') }}
+{% if legacySales ?? false %}
+   <p class="warning has-icon">
+      {{ 'This store still uses legacy Sales, so Commerce is ignoring its catalog pricing rules.'|t('pricing-rules-relationship') }}
+   </p>
+{% endif %}
 {% if storeError %}
-   <p id="{{ noticeId }}" class="light">
+   <p class="light">
       {{ storeError }}
    </p>
+{% elseif rules is empty and (rulesHidden ?? false) %}
+   <p class="light">
+      {{ 'This store\'s running and scheduled pricing rules are all limited to particular customers. You need Commerce\'s Manage promotions permission to see them.'|t('pricing-rules-relationship') }}
+   </p>
 {% elseif rules is empty %}
-   <p id="{{ noticeId }}" class="light">
+   <p class="light">
       {{ emptyText }}
    </p>
 {% else %}
-   {% if legacySales ?? false %}
-      <p class="warning has-icon">
-         {{ 'This store still uses legacy Sales, so Commerce is ignoring its catalog pricing rules.'|t('pricing-rules-relationship') }}
-      </p>
-   {% endif %}
-   {{ hiddenInput(field.handle, '') }}
-   <div
-      class="checkbox-group"
-      role="group"
-      aria-label="{{ 'Available pricing rules'|t('pricing-rules-relationship') }}"
-      {% if deletedCount %}aria-describedby="{{ noticeId }}"{% endif %}
-   >
+   <div class="checkbox-group">
       {% for rule in rules %}
          <div>
             <input
@@ -33,26 +32,26 @@
                name="{{ field.handle }}[]"
                value="{{ rule.id }}"
                {% if rule.id in value %}checked{% endif %}
+               {% if loop.first and deletedCount %}aria-describedby="{{ noticeId }}"{% endif %}
             >
-            <label class="flex flex-nowrap items-center gap-xs" for="{{ field.handle }}-{{ rule.id }}"><span>{{ rule.name }}</span>
-               {% if rule.startsLater %}
-                  <span class="light">
-                     <span class="smalltext">({{ 'starts {date}'|t('pricing-rules-relationship', { date: rule.startsLater|datetime('short') }) }})</span>
-                  </span>
-               {% endif %}
-               {% if field.showRuleExpiryDates and rule.dateTo %}
-                  <span class="light">
-                     <span class="smalltext">({{ 'expires {date}'|t('pricing-rules-relationship', { date: rule.dateTo|datetime('short') }) }})</span>
-                  </span>
-               {% endif %}</label>
+            {%- set dates = [] %}
+            {%- if rule.startsLater %}
+               {%- set dates = dates|merge(['starts {date}'|t('pricing-rules-relationship', { date: rule.startsLater|datetime('short') })]) %}
+            {%- endif %}
+            {%- if field.showRuleExpiryDates and rule.dateTo %}
+               {%- set dates = dates|merge(['expires {date}'|t('pricing-rules-relationship', { date: rule.dateTo|datetime('short') })]) %}
+            {%- endif %}
+            <label for="{{ field.handle }}-{{ rule.id }}">{{ rule.name }}
+               {%- if dates is not empty %} <span class="light smalltext">({{ dates|join('; ') }})</span>{% endif -%}
+            </label>
          </div>
       {% endfor %}
    </div>
-   {% if deletedCount %}
-      <p id="{{ noticeId }}" class="warning has-icon">
-         {{ '{count, plural, one{# selected rule has been deleted from Commerce and will be removed when you save.} other{# selected rules have been deleted from Commerce and will be removed when you save.}}'|t('pricing-rules-relationship', { count: deletedCount }) }}
-      </p>
-   {% endif %}
+{% endif %}
+{% if deletedCount %}
+   <p id="{{ noticeId }}" class="warning has-icon">
+      {{ '{count, plural, one{# selected rule has been deleted from Commerce and will be removed when you save.} other{# selected rules have been deleted from Commerce and will be removed when you save.}}'|t('pricing-rules-relationship', { count: deletedCount }) }}
+   </p>
 {% endif %}
 {% if field.showNewRuleButton and storeHandle and canCreateRules %}
    <div class="mt-m">

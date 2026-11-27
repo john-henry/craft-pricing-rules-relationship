@@ -321,13 +321,16 @@ class PricingRulesRelationshipField extends Field
         $selectedIds = $this->normalizeValue($value, $element);
         $userService = Craft::$app->getUser();
 
+        $liveRules = $this->_liveRules($store);
+        $offeredRules = $this->_rulesForCurrentUser($liveRules);
+
         $now = new DateTime();
         $rules = array_map(static fn(CatalogPricingRule $rule): array => [
             'id' => (int)$rule->id,
             'name' => $rule->name,
             'dateTo' => $rule->dateTo,
             'startsLater' => $rule->dateFrom !== null && $rule->dateFrom > $now ? $rule->dateFrom : null,
-        ], $this->_offeredRules($store));
+        ], $offeredRules);
 
         // Only rules deleted from Commerce are worth a warning: they're dropped on
         // save. Expired, switched-off and hidden rules are kept quietly.
@@ -339,10 +342,13 @@ class PricingRulesRelationshipField extends Field
             'value' => $selectedIds,
             'rules' => $rules,
             'storeError' => $store === null
-                ? Craft::t('pricing-rules-relationship', 'No store available for this site')
+                ? Craft::t('pricing-rules-relationship', 'This site has no Commerce store, so there are no pricing rules to choose from.')
                 : null,
             'storeHandle' => $store?->handle,
             'deletedCount' => $deletedCount,
+            // Every live rule exists but is limited to particular customers, so
+            // "no rules" would be untrue for this editor.
+            'rulesHidden' => $offeredRules === [] && $liveRules !== [],
             // Commerce's new-rule screen needs both permissions.
             'canCreateRules' => $userService->checkPermission(self::PERMISSION_MANAGE_PROMOTIONS)
                 && $userService->checkPermission('commerce-createCatalogPricingRules'),
@@ -392,11 +398,6 @@ class PricingRulesRelationshipField extends Field
     /**
      * Returns the rules the current user is offered as checkboxes.
      *
-     * Enabled rules that haven't ended are offered, including ones scheduled to
-     * start later, so a campaign can be set up ahead of its sale. A user
-     * without Commerce's promotions permission is only offered rules open to
-     * every customer, since a rule's name can give away a deal made with one.
-     *
      * @param Store|null $store The store, or null.
      * @return CatalogPricingRule[] The offered rules.
      * @author John Henry Donovan <info@johnhenry.ie>
@@ -404,24 +405,52 @@ class PricingRulesRelationshipField extends Field
      */
     private function _offeredRules(?Store $store): array
     {
+        return $this->_rulesForCurrentUser($this->_liveRules($store));
+    }
+
+    /**
+     * Returns the store's enabled rules that haven't ended, including ones
+     * scheduled to start later, so a campaign can be set up ahead of its sale.
+     *
+     * @param Store|null $store The store, or null.
+     * @return CatalogPricingRule[] The live rules.
+     * @author John Henry Donovan <info@johnhenry.ie>
+     * @since 1.1.1
+     */
+    private function _liveRules(?Store $store): array
+    {
         if ($store === null) {
             return [];
         }
 
         try {
             $now = time();
-            $rules = array_filter(
+
+            return array_values(array_filter(
                 PricingRulesRelationship::getInstance()->getPricingRulesRelationshipService()->getEnabledRules((int)$store->id),
                 static fn(CatalogPricingRule $rule): bool => $rule->dateTo === null || $rule->dateTo->getTimestamp() >= $now,
-            );
+            ));
         } catch (Throwable $e) {
             Craft::warning("Failed to load catalog pricing rules: {$e->getMessage()}", 'pricing-rules-relationship');
 
             return [];
         }
+    }
 
+    /**
+     * Narrows rules to the ones the current user may see. A user without
+     * Commerce's promotions permission only gets rules open to every customer,
+     * since a rule's name can give away a deal made with one.
+     *
+     * @param CatalogPricingRule[] $rules The rules to narrow.
+     * @return CatalogPricingRule[] The rules the user may see.
+     * @author John Henry Donovan <info@johnhenry.ie>
+     * @since 1.1.1
+     */
+    private function _rulesForCurrentUser(array $rules): array
+    {
         if (Craft::$app->getUser()->checkPermission(self::PERMISSION_MANAGE_PROMOTIONS)) {
-            return array_values($rules);
+            return $rules;
         }
 
         return array_values(array_filter($rules, static function(CatalogPricingRule $rule): bool {

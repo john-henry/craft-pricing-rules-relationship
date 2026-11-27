@@ -1,5 +1,18 @@
 # Release Notes for Pricing Rules Relationship
 
+## 1.1.1 - 2026-11-27
+
+### Changed
+- A rule with both a start and an end date shows them together in one bracket.
+- On narrow screens, a rule's dates wrap onto the next line instead of squeezing into a column beside its name.
+- Clearer instructions on the field's three settings.
+- Clearer messages when the store has no rules to offer, or the site has no store.
+- Editors without Manage promotions are told when rules exist but are limited to particular customers, instead of being told there are none.
+- Screen readers no longer announce the rule list as a second group inside the field.
+
+### Fixed
+- The deleted-rule and legacy Sales notices now show even when no rules are offered, and a deleted rule is removed on save in that case too.
+
 ## 1.1.0 - 2026-09-25
 
 ### Added
